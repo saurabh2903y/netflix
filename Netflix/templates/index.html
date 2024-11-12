@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix Series Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Search Netflix Series</h1>
+        <input type="text" id="categoryInput" placeholder="Enter category (e.g., Action)">
+        <button onclick="searchSeries()">Search</button>
+        
+        <div class="results" id="resultsContainer"></div>
+        
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        function searchSeries() {
+            const category = document.getElementById('categoryInput').value;
+            console.log("Searching for category:", category); // Debug log
+            
+            fetch(`/search?category=${category}&page=${currentPage}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Search results:", data); // Debug log
+                    totalPages = data.total_pages;
+                    displayResults(data.page_data);
+                    displayPagination();
+                })
+                .catch(error => {
+                    console.error('Error fetching the results:', error);
+                    alert('Error fetching results. Please try again later.'); // User-friendly message
+                });
+        }
+
+        function displayResults(results) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            resultsContainer.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+                return;
+            }
+
+            results.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `<strong>${item.title}</strong> (${item.release_year})<br>${item.description}`;
+                resultsContainer.appendChild(div);
+            });
+        }
+
+        function displayPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            if (currentPage > 1) {
+                const prevButton = document.createElement('button');
+                prevButton.innerHTML = 'Previous';
+                prevButton.onclick = () => {
+                    currentPage--;
+                    searchSeries();
+                };
+                pagination.appendChild(prevButton);
+            }
+
+            const pageInfo = document.createElement('span');
+            pageInfo.innerHTML = ` Page ${currentPage} of ${totalPages} `;
+            pagination.appendChild(pageInfo);
+
+            if (currentPage < totalPages) {
+                const nextButton = document.createElement('button');
+                nextButton.innerHTML = 'Next';
+                nextButton.onclick = () => {
+                    currentPage++;
+                    searchSeries();
+                };
+                pagination.appendChild(nextButton);
+            }
+        }
+    </script>
+</body>
+</html>
